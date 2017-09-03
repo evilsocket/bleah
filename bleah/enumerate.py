@@ -11,6 +11,9 @@ from bleah.swag import *
 
 def is_mostly_printable(s):
     tot = len(s)
+    if tot == 0:
+        return False
+
     pr  = 0
 
     for c in s:
@@ -19,9 +22,27 @@ def is_mostly_printable(s):
 
     return ( pr / float(tot) ) >= 0.75
 
+def get_svc_desc(s):
+    uuid_name = s.uuid.getCommonName()
+    if uuid_name and uuid_name != str(s.uuid):
+        svc_line = bold( green( uuid_name ) ) + " ( %s )" % s.uuid
+    else:
+        svc_line = bold( str(s.uuid) ) 
+
+    return svc_line
+
+def get_char_desc(c):
+    char_name = c.uuid.getCommonName()
+    if char_name and char_name != str(c.uuid):
+        char_line = '  ' + bold( green( char_name ) ) + " ( %s )" % c.uuid
+    else:
+        char_line = '  ' + str(c.uuid)
+    
+    return char_line
+
 def enumerate_device_properties(dev,args):
     tdata = [
-        [ "HND", "DESC", "PROPS", "DATA" ] 
+        [ "Handles", "Service > Characteristics", "Properties", "Data" ] 
     ]
 
     services = sorted(dev.services, key=lambda s: s.hndStart)
@@ -32,7 +53,7 @@ def enumerate_device_properties(dev,args):
         if s.hndStart == s.hndEnd:
             continue
 
-        tdata.append([ "%04x" % s.hndStart, bold( str(s) ), "", "" ])
+        tdata.append([ "%04x -> %04x" % ( s.hndStart, s.hndEnd ), get_svc_desc(s), "", "" ])
 
         chars = s.getCharacteristics()
         for i, c in enumerate(chars):
@@ -55,7 +76,7 @@ def enumerate_device_properties(dev,args):
             else:
                 string = ''
 
-            tdata.append([ "%04x" % h, "  %s" % c, props, string ])
+            tdata.append([ "%04x" % h, get_char_desc(c), props, string ])
 
             while args.handles:
                 h += 1
@@ -68,7 +89,9 @@ def enumerate_device_properties(dev,args):
                     val = red( str(e) )
                     break
 
-                tdata.append([ '%04x' % h, gray('  --'), gray('--'), binascii.b2a_hex(val).decode('utf-8') ])
+                tdata.append([ '%04x' % h, gray('    --'), gray('--'), binascii.b2a_hex(val).decode('utf-8') ])
+
+        tdata.append([ '', '', '', '' ])
 
     print "\n\n" + SingleTable(tdata).table
 

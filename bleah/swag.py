@@ -2,29 +2,29 @@
 import os
 from bleah.version import VERSION
 
-def effect(s,c):
+def effect(s,c,close=True):
     if os.getenv('c', '1') == 0:
         return s
     else:
-        return "\033[%dm%s\33[0m" % ( c, s )
+        return "\033[%dm%s%s" % ( c, s, "\33[0m" if close else "" )
 
-def red(s):
-    return effect( s, 31 )
+def red(s,close=True):
+    return effect( s, 31, close )
 
-def green(s):
-    return effect( s, 32 )
+def green(s,close=True):
+    return effect( s, 32, close )
 
-def yellow(s):
-    return effect( s, 33 )
+def yellow(s,close=True):
+    return effect( s, 33, close )
 
-def blue(s):
-    return effect( s, 34 )
+def blue(s,close=True):
+    return effect( s, 34, close )
 
-def gray(s):
-    return effect( s, 90 )
+def gray(s,close=True):
+    return effect( s, 90, close )
 
-def bold(s):
-    return effect( s, 1 )
+def bold(s,close=True):
+    return effect( s, 1, close )
 
 def print_sexy_banner():
     banner = u"""
