@@ -53,11 +53,14 @@ class ScanReceiver(DefaultDelegate):
             [ 'Allows Connections', clabel ],
         ]
 
-        for ( sdid, desc, val ) in dev.getScanData():
+        for ( tag, desc, val ) in dev.getScanData():
             if desc == 'Flags':
                 tdata.append([ 'Flags', self._parseFlags(val) ])
-            elif sdid in [8, 9]:
-                tdata.append([ desc, yellow(val) ])
+
+            # short local name or complete local name
+            elif tag in [8, 9]:
+                tdata.append([ desc, yellow( val.decode('utf-8') ) ])
+
             else:
                 tdata.append([ desc, repr(val) ])
 
