@@ -2,10 +2,33 @@
 #coding:utf8
 import argparse
 import sys
+import re
 
+from bleah.swag import *
 from bleah.scan import *
 from bleah.enumerate import *
-from bleah.swag import *
+from bleah.write import *
+
+def check_args(args):
+    if args.uuid is not None and args.data is None:
+        print "! Data parameter ( --data ) is required for write operations.\n"
+        quit()
+
+    elif args.uuid is not None and args.mac is None:
+        print "! MAC parameter ( --mac ) is required for write operations.\n"
+        quit()
+
+    elif args.uuid is not None and not re.match( r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', args.uuid, re.I ):
+        print "! Invalid UUID value.\n"
+        quit()
+
+def skip_device( args, dev ):
+    if args.mac is not None and dev.addr != args.mac:
+        return True
+    elif not dev.connectable and args.force is False:
+        return True
+    else:
+        return False
 
 def main():
     print_sexy_banner()
@@ -14,20 +37,25 @@ def main():
     parser.add_argument('-i', '--hci', action='store', type=int, default=0, help='HCI device index.')
     parser.add_argument('-t', '--timeout', action='store', type=int, default=5, help='Scan delay, 0 for continuous scanning.')
     parser.add_argument('-s', '--sensitivity', action='store', type=int, default=-128, help='dBm threshold.')
-    parser.add_argument('-d', '--discover', action='store_true', help='Connect to available devices and perform service discovery.')
-    parser.add_argument('-n', '--handles', action='store_true', help='Try to read every handle. ' + red("WARNING: For some devices this might cause the read operation to hang ¯\_(ツ)_/¯"))
+
+    parser.add_argument('-b', '--mac', action='store', type=str, default=None, help='Filter by device address.' )
     parser.add_argument('-f', '--force', action='store_true', help='Try to connect even if the device doesn\'t allow to.')
-    parser.add_argument('-b', '--bssid', action='store', type=str, default='', help='Filter by device address.' )
+
+    parser.add_argument('-e', '--enumerate', action='store_true', help='Connect to available devices and perform services enumeration.')
+    parser.add_argument('--handles', action='store_true', help='Try to read every handle. ' + red("WARNING: For some devices this might cause the read operation to hang ¯\_(ツ)_/¯"))
+
+    parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
+    parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written.' )
 
     args = parser.parse_args(sys.argv[1:])
 
+    check_args(args)
+
     devices = start_scan(args)
 
-    if args.discover:
+    if args.enumerate or args.uuid is not None:
         for d in devices:
-            if args.bssid != '' and d.addr != args.bssid:
-                continue
-            elif not d.connectable and args.force is False:
+            if skip_device( args, d ):
                 continue
 
             warn = ""
@@ -41,8 +69,16 @@ def main():
                 dev = Peripheral(d)
 
                 print green('connected.')
-                print "@ Enumerating all the things ",
-                enumerate_device_properties( dev, args )
+                
+                if args.uuid:
+                    print
+                    do_write_ops( dev, args )
+                    print
+                
+                if args.enumerate:
+                    print "@ Enumerating all the things ",
+                    enumerate_device_properties( dev, args )
+
                 dev.disconnect()
                 print
             except Exception as e:

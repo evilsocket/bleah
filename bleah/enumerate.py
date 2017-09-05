@@ -237,6 +237,20 @@ def deserialize_pnp_id( raw ):
 
     return s
 
+# org.bluetooth.characteristic.gap.peripheral_privacy_flag
+def deserialize_peripheral_privacy_flag( raw ):
+    try:
+        b = ord(raw[0])
+        if b == 0x00:
+            s = green('Privacy Disabled')
+        else:
+            s = red('Privacy Enabled')
+
+    except:
+        s = repr(raw)
+
+    return s
+
 
 
 def deserialize_char( char, props ):
@@ -254,8 +268,14 @@ def deserialize_char( char, props ):
             elif char.uuid == AssignedNumbers.pnp_id:
                 string = deserialize_pnp_id(raw)
 
+            elif char.uuid == AssignedNumbers.peripheral_privacy_flag:
+                string = deserialize_peripheral_privacy_flag(raw)
+
             elif is_mostly_printable(raw):
-                string = yellow( repr( raw.decode('utf-8') ) )
+                try:
+                    string = yellow( repr( raw.decode('utf-8') ) )
+                except:
+                    string = yellow( repr( raw ) )
 
             else:
                 string = repr(raw)
@@ -286,7 +306,7 @@ def enumerate_device_properties(dev,args):
         chars = s.getCharacteristics()
         for i, char in enumerate(chars):
             desc  = get_char_desc(char)
-            props = char.propertiesToString()
+            props = char.propertiesToString().replace( 'WRITE', bold('WRITE') )
             hnd   = char.getHandle()
             value = deserialize_char( char, props )
 

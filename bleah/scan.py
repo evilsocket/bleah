@@ -38,7 +38,7 @@ class ScanReceiver(DefaultDelegate):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if not isNewDev:
             return 
-        elif self.opts.bssid != '' and dev.addr != self.opts.bssid:
+        elif self.opts.mac is not None and dev.addr != self.opts.mac:
             return 
         elif dev.rssi < self.opts.sensitivity:
             return
