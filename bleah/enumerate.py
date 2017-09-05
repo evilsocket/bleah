@@ -5,10 +5,24 @@ import sys
 import string
 import struct
 from terminaltables import SingleTable
-from bluepy.btle import Scanner, DefaultDelegate, Peripheral, AssignedNumbers
+from bluepy.btle import Scanner, DefaultDelegate, Peripheral, AssignedNumbers, UUID
 
 from bleah.scan import *
 from bleah.swag import *
+
+def assigned_numbers_add( uuid, name ):
+    u = UUID(uuid,name)
+    AssignedNumbers.idMap[u] = u
+
+assigned_numbers_add( "d0611e78-bbb4-4591-a5f8-487910ae4366", 'Apple Continuity Service' )
+assigned_numbers_add( "7905f431-b5ce-4e99-a40f-4b1e122d00d0", 'Apple Notification Center Service' )
+assigned_numbers_add( "69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9", 'Control Point' )
+assigned_numbers_add( "9fbf120d-6301-42d9-8c58-25e699a21dbd", 'Notification Source' )
+assigned_numbers_add( "22eac6e9-24d6-4bb5-be44-b36ace7c7bfb", 'Data Source' )
+assigned_numbers_add( "89d3502b-0f36-433a-8ef4-c502ad55f8dc", 'Apple Media Service' )
+assigned_numbers_add( "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2", 'Remote Command' )
+assigned_numbers_add( "2f7cabce-808d-411f-9a0c-bb92ba96c102", 'Entity Update' )
+assigned_numbers_add( "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7", 'Entity Attribute' )
 
 def is_mostly_printable(s):
     tot = len(s)
