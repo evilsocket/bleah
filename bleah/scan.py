@@ -1,9 +1,70 @@
 #coding:utf8
+import time
+import binascii
+
 from terminaltables import SingleTable
-from bluepy.btle import Scanner, DefaultDelegate
+from bluepy.btle import BTLEException, Scanner, ScanEntry, DefaultDelegate
 
 import bleah.vendors as vendors
 from bleah.swag import *
+
+class SmarterScanner(Scanner):
+    def __init__(self,mac=None,iface=0):
+        Scanner.__init__(self,iface)
+        self.mac = mac
+
+    def _find_or_create( self, addr ):
+        if addr in self.scanned:
+            dev = self.scanned[addr]
+        else:
+            dev = ScanEntry(addr, self.iface)
+            self.scanned[addr] = dev
+
+        return dev
+
+    def _decode_address( self, resp ):
+        addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
+        return ':'.join([addr[i:i+2] for i in range(0,12,2)])
+
+    def process(self, timeout=10.0):
+        if self._helper is None:
+            raise BTLEException(BTLEException.INTERNAL_ERROR, "Helper not started (did you call start()?)")
+
+        start = time.time()
+        while True:
+            if timeout:
+                remain = start + timeout - time.time()
+                if remain <= 0.0: 
+                    break
+            else:
+                remain = None
+
+            resp = self._waitResp(['scan', 'stat'], remain)
+            if resp is None:
+                break
+
+            respType = resp['rsp'][0]
+
+            if respType == 'stat':
+                # if scan ended, restart it
+                if resp['state'][0] == 'disc':
+                    self._mgmtCmd("scan")
+
+            elif respType == 'scan':
+                # device found
+                addr = self._decode_address(resp) 
+                dev = self._find_or_create(addr)
+
+                isNewData = dev._update(resp)
+
+                if self.delegate is not None:
+                    self.delegate.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+
+                if self.mac is not None and dev.addr == self.mac:
+                    break
+
+            else:
+                raise BTLEException(BTLEException.INTERNAL_ERROR, "Unexpected response: " + respType)
 
 class ScanReceiver(DefaultDelegate):
     def __init__(self, opts):
@@ -72,7 +133,7 @@ class ScanReceiver(DefaultDelegate):
 
 def start_scan(args):
     vendors.load()
-    scanner = Scanner(args.hci).withDelegate(ScanReceiver(args))
+    scanner = SmarterScanner(args.mac,args.hci).withDelegate(ScanReceiver(args))
 
     if args.timeout == 0:
         print "@ Continuous scanning [%d dBm of sensitivity] ...\n" % args.sensitivity

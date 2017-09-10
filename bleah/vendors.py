@@ -5,7 +5,6 @@ FILEPATH = os.path.realpath( os.path.join( os.path.dirname( os.path.realpath(__f
 VENDORS = {}
 
 def load():
-    # print "@ Preloading vendors ..."
     with open( FILEPATH, 'rt' ) as fp:
         for line in fp:
             line = line.strip()
