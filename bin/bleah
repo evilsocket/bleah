@@ -10,6 +10,10 @@ from bleah.enumerate import *
 from bleah.write import *
 
 def check_args(args):
+    if args.datafile is not None:   
+        with open( args.datafile, 'rb' ) as fd:
+            args.data = fd.read()
+
     if args.uuid is not None and args.data is None:
         print "! Data parameter ( --data ) is required for write operations.\n"
         quit()
@@ -46,6 +50,7 @@ def main():
 
     parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written.' )
+    parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
 
     args = parser.parse_args(sys.argv[1:])
 
