@@ -1,6 +1,6 @@
 # BLEAH 
 
-A BLE scanner for "smart" devices hacking based on the `bluepy` library.
+A BLE scanner for "smart" devices hacking based on the `bluepy` library, dead easy to use because retarded devices should be dead easy to hack.
 
 ## How to Install
 
