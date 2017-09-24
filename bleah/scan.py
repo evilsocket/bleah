@@ -137,8 +137,10 @@ class ScanReceiver(DefaultDelegate):
 
             # short local name or complete local name
             elif tag in [8, 9]:
-                tdata.append([ desc, yellow( val.decode('utf-8') ) ])
-
+                try:
+                    tdata.append([ desc, yellow( val.decode('utf-8') ) ])
+                except UnicodeEncodeError:
+                    tdata.append([ desc, yellow( repr(val) ) ])
             else:
                 tdata.append([ desc, repr(val) ])
 
