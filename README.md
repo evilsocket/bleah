@@ -1,6 +1,6 @@
 # BLEAH 
 
-A BLE scanner for "smart" devices hacking based on the `bluepy` library, dead easy to use because retarded devices should be dead easy to hack. Explanatory post and screenshot [can be found here](https://www.evilsocket.net/2017/09/23/This-is-not-a-post-about-BLE-introducing-BLEAH/).
+A BLE scanner for "smart" devices hacking based on the `bluepy` library, dead easy to use because retarded devices should be dead easy to hack. Explanatory post and screenshots [can be found here](https://www.evilsocket.net/2017/09/23/This-is-not-a-post-about-BLE-introducing-BLEAH/).
 
 ## How to Install
 
