@@ -4,11 +4,19 @@ A BLE scanner for "smart" devices hacking based on the `bluepy` library, dead ea
 
 ## How to Install
 
-Install [bluepy following the instructions](https://github.com/IanHarvey/bluepy), then:
+Install [bluepy](https://github.com/IanHarvey/bluepy) from source:
 
+    git clone https://github.com/IanHarvey/bluepy.git
+    cd bluepy
+    python setup.py build
+    sudo python setup.py install
+
+Then install `bleah`:
+
+    git clone https://github.com/evilsocket/bleah.git
     cd bleah
     python setup.py build
-    sudp python setup.py install
+    sudo python setup.py install
 
 ## Usage
 
