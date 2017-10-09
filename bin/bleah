@@ -30,8 +30,12 @@ from bleah.write import *
 
 def check_args(args):
     if args.datafile is not None:   
-        with open( args.datafile, 'rb' ) as fd:
-            args.data = fd.read()
+        try:
+            with open( args.datafile, 'rb' ) as fd:
+                args.data = fd.read()
+        except:
+            print "! Could not access %s for reading, please don't be this guy: https://github.com/evilsocket/bleah/issues/18" % args.datafile
+            quit()
 
     if args.uuid is not None and args.data is None:
         print "! Data parameter ( --data ) is required for write operations.\n"
