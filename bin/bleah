@@ -23,6 +23,8 @@ import argparse
 import sys
 import re
 
+from bluepy.btle import BTLEException
+
 from bleah.swag import *
 from bleah.scan import *
 from bleah.enumerate import *
@@ -120,5 +122,8 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+    except BTLEException as be:
+        print "\nBTLE Exception:\n%s\n" % red( str(be) )
+
     except KeyboardInterrupt:
         print "\n@ Quitting."
