@@ -22,8 +22,7 @@ Then install `bleah`:
 
 From the `-h` help menu:
 
-    usage: bleah [-h] [-i HCI] [-t TIMEOUT] [-s SENSITIVITY] [-b MAC] [-f] [-e]
-                 [--handles] [-u UUID] [-d DATA] [-r DATAFILE]
+    usage: bleah [-h] [-i HCI] [-t TIMEOUT] [-s SENSITIVITY] [-b MAC] [-f] [-e] [-u UUID] [-d DATA] [-r DATAFILE]
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -36,9 +35,6 @@ From the `-h` help menu:
       -f, --force           Try to connect even if the device doesn't allow to.
       -e, --enumerate       Connect to available devices and perform services
                             enumeration.
-      --handles             Try to read every handle. WARNING: For some
-                            devices this might cause the read operation to hang
-                            ¯\_(ツ)_/¯
       -u UUID, --uuid UUID  Write data to this characteristic UUID (requires --mac
                             and --data).
       -d DATA, --data DATA  Data to be written.

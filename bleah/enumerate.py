@@ -343,6 +343,7 @@ def enumerate_device_properties(dev,args):
 
             tdata.append([ "%04x" % hnd, desc, props, value ])
 
+            """
             while args.handles:
                 hnd += 1
                 if hnd > s.hndEnd or (i < len(chars) - 1 and hnd >= chars[i + 1].getHandle() - 1):
@@ -355,6 +356,7 @@ def enumerate_device_properties(dev,args):
                     break
 
                 tdata.append([ '%04x' % hnd, gray('    --'), gray('--'), binascii.b2a_hex(val).decode('utf-8') ])
+            """
 
         tdata.append([ '', '', '', '' ])
 

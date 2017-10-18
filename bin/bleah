@@ -71,7 +71,6 @@ def main():
     parser.add_argument('-f', '--force', action='store_true', help='Try to connect even if the device doesn\'t allow to.')
 
     parser.add_argument('-e', '--enumerate', action='store_true', help='Connect to available devices and perform services enumeration.')
-    parser.add_argument('--handles', action='store_true', help='Try to read every handle. ' + red("WARNING: For some devices this might cause the read operation to hang ¯\_(ツ)_/¯"))
 
     parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written.' )
