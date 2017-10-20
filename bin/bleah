@@ -22,6 +22,8 @@
 import argparse
 import sys
 import re
+import string
+import binascii
 
 from bluepy.btle import BTLEException
 
@@ -42,6 +44,12 @@ def check_args(args):
     if args.uuid is not None and args.handle is not None:
         print "Both a UUID and Handle have been set, using handle.\n"
         args.uuid=""
+
+    # check for hex string
+    if args.data is not None and args.data.startswith('0x'):
+        hexdata = args.data[2:]
+        if all(c in string.hexdigits for c in hexdata):
+            args.data = binascii.unhexlify(hexdata)
 
     if args.uuid is not None or args.handle is not None:
         if args.data is None:
@@ -87,7 +95,7 @@ def main():
 
     parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
     parser.add_argument('-n', '--handle', action='store', type=str, default=None, help='Write data to this characteristic handle (requires --mac and --data).' )
-    parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written.' )
+    parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
 
     args = parser.parse_args(sys.argv[1:])
