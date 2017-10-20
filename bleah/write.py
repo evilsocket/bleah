@@ -23,7 +23,10 @@ from bleah.swag import *
 
 def do_write_ops( dev, args ):
     char = None
-    print "@ Searching for characteristic %s ..." % ( bold(args.uuid) ),
+    lookingfor = "uuid(%s)" % (args.uuid)
+    if args.handle:
+        lookingfor="handle(%d)" % (args.handle)
+    print "@ Searching for characteristic %s ..." % ( bold(lookingfor) ),
     sys.stdout.flush()
 
     for s in dev.services:
@@ -33,9 +36,14 @@ def do_write_ops( dev, args ):
             continue
     
         for i, c in enumerate( s.getCharacteristics() ):
-            if str(c.uuid) == args.uuid:
-                char = c
-                break
+            if args.uuid:
+                if str(c.uuid) == args.uuid:
+                    char = c
+                    break
+            if args.handle:
+                if c.getHandle() == args.handle:
+                    char =c
+                    break
 
     if char is not None:
         if "WRITE" in char.propertiesToString():
