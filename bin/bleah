@@ -22,6 +22,8 @@
 import argparse
 import sys
 import re
+import string
+import binascii
 
 from bluepy.btle import BTLEException
 
@@ -38,6 +40,12 @@ def check_args(args):
         except:
             print "! Could not access %s for reading, please don't be this guy: https://github.com/evilsocket/bleah/issues/18" % args.datafile
             quit()
+
+    # check for hex string
+    if args.data is not None and args.data.startswith('0x'):
+        hexdata = args.data[2:]
+        if all(c in string.hexdigits for c in hexdata):
+            args.data = binascii.unhexlify(hexdata)
 
     if args.uuid is not None and args.data is None:
         print "! Data parameter ( --data ) is required for write operations.\n"
@@ -73,7 +81,7 @@ def main():
     parser.add_argument('-e', '--enumerate', action='store_true', help='Connect to available devices and perform services enumeration.')
 
     parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
-    parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written.' )
+    parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
 
     args = parser.parse_args(sys.argv[1:])
