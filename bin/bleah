@@ -41,23 +41,36 @@ def check_args(args):
             print "! Could not access %s for reading, please don't be this guy: https://github.com/evilsocket/bleah/issues/18" % args.datafile
             quit()
 
+    if args.uuid is not None and args.handle is not None:
+        print "Both a UUID and Handle have been set, using handle.\n"
+        args.uuid=""
+
     # check for hex string
     if args.data is not None and args.data.startswith('0x'):
         hexdata = args.data[2:]
         if all(c in string.hexdigits for c in hexdata):
             args.data = binascii.unhexlify(hexdata)
 
-    if args.uuid is not None and args.data is None:
-        print "! Data parameter ( --data ) is required for write operations.\n"
+    if args.uuid is not None or args.handle is not None:
+        if args.data is None:
+            print "! Data parameter ( --data ) is required for write operations.\n"
+            quit()
+
+        if args.mac is None:
+            print "! MAC parameter ( --mac ) is required for write operations.\n"
+            quit()
+
+    if args.uuid is not None and not re.match( r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', args.uuid, re.I ):
+        print "! Invalid UUID value:", args.uuid, "\n"
         quit()
 
-    elif args.uuid is not None and args.mac is None:
-        print "! MAC parameter ( --mac ) is required for write operations.\n"
-        quit()
-
-    elif args.uuid is not None and not re.match( r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', args.uuid, re.I ):
-        print "! Invalid UUID value.\n"
-        quit()
+    if args.handle is not None:
+        # convert it to an int
+        try:
+            args.handle=int(args.handle, 0)
+        except ValueError:
+            print "! Invalid handle:", args.handle, "\n"
+            quit()
 
 def skip_device( args, dev ):
     if args.mac is not None and dev.addr != args.mac:
@@ -81,6 +94,7 @@ def main():
     parser.add_argument('-e', '--enumerate', action='store_true', help='Connect to available devices and perform services enumeration.')
 
     parser.add_argument('-u', '--uuid', action='store', type=str, default=None, help='Write data to this characteristic UUID (requires --mac and --data).' )
+    parser.add_argument('-n', '--handle', action='store', type=str, default=None, help='Write data to this characteristic handle (requires --mac and --data).' )
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
 
@@ -90,7 +104,7 @@ def main():
 
     devices = start_scan(args)
 
-    if args.enumerate or args.uuid is not None:
+    if args.enumerate or args.uuid is not None or args.handle is not None:
         for d in devices:
             if skip_device( args, d ):
                 continue
@@ -107,7 +121,7 @@ def main():
 
                 print green('connected.')
                 
-                if args.uuid:
+                if args.uuid or args.handle:
                     print
                     do_write_ops( dev, args )
                     print
