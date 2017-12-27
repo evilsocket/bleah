@@ -117,7 +117,7 @@ def main():
             sys.stdout.flush()
 
             try:
-                dev = Peripheral(d)
+                dev = Peripheral(d,d.addrType)
 
                 print green('connected.')
                 

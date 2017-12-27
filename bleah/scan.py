@@ -129,6 +129,7 @@ class ScanReceiver(DefaultDelegate):
         tdata  = [
             [ 'Vendor', vlabel ],
             [ 'Allows Connections', clabel ],
+            [ 'Address Type', dev.addrType]
         ]
 
         for ( tag, desc, val ) in dev.getScanData():
