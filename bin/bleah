@@ -60,6 +60,9 @@ def check_args(args):
             print "! MAC parameter ( --mac ) is required for write operations.\n"
             quit()
 
+    if args.mac is not None:
+        args.mac = args.mac.lower()
+
     if args.uuid is not None and not re.match( r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', args.uuid, re.I ):
         print "! Invalid UUID value:", args.uuid, "\n"
         quit()
