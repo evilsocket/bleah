@@ -103,7 +103,7 @@ class ScanReceiver(DefaultDelegate):
             bits.append( 'LE General Discoverable' )
 
         if self._isBitSet( flags, 2 ):
-            bits.append( 'BR/EDR' )
+            bits.append( 'BR/EDR Not Supported' )
 
         if self._isBitSet( flags, 3 ):
             bits.append( 'LE + BR/EDR Controller Mode' )
