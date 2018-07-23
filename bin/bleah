@@ -75,6 +75,16 @@ def check_args(args):
             print "! Invalid handle:", args.handle, "\n"
             quit()
 
+    if args.mtu is not None:
+        try:
+            args.mtu=int(args.mtu)
+            # 23 byte are the default ATT_MTU size, according to the standard a maximum of 512 bytes are allowed
+            if args.mtu < 23 or args.mtu > 512:
+              raise ValueError
+        except ValueError:
+            print "! Invalid mtu:", args.mtu, "\n"
+            quit()
+
 def skip_device( args, dev ):
     if args.mac is not None and dev.addr != args.mac:
         return True
@@ -100,6 +110,7 @@ def main():
     parser.add_argument('-n', '--handle', action='store', type=str, default=None, help='Write data to this characteristic handle (requires --mac and --data).' )
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
+    parser.add_argument('-m', '--mtu', action='store', type=int, default=None, help='Set MTU.' )
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -121,6 +132,8 @@ def main():
 
             try:
                 dev = Peripheral(d,d.addrType)
+                if args.mtu:
+                  dev.setMTU(args.mtu)
 
                 print green('connected.')
                 
