@@ -33,16 +33,16 @@ from bleah.enumerate import *
 from bleah.write import *
 
 def check_args(args):
-    if args.datafile is not None:   
+    if args.datafile is not None:
         try:
             with open( args.datafile, 'rb' ) as fd:
                 args.data = fd.read()
         except:
-            print "! Could not access %s for reading, please don't be this guy: https://github.com/evilsocket/bleah/issues/18" % args.datafile
+            print("! Could not access %s for reading, please don't be this guy: https://github.com/evilsocket/bleah/issues/18" % args.datafile)
             quit()
 
     if args.uuid is not None and args.handle is not None:
-        print "Both a UUID and Handle have been set, using handle.\n"
+        print("Both a UUID and Handle have been set, using handle.\n")
         args.uuid=""
 
     # check for hex string
@@ -53,18 +53,18 @@ def check_args(args):
 
     if args.uuid is not None or args.handle is not None:
         if args.data is None:
-            print "! Data parameter ( --data ) is required for write operations.\n"
+            print("! Data parameter ( --data ) is required for write operations.\n")
             quit()
 
         if args.mac is None:
-            print "! MAC parameter ( --mac ) is required for write operations.\n"
+            print("! MAC parameter ( --mac ) is required for write operations.\n")
             quit()
 
     if args.mac is not None:
         args.mac = args.mac.lower()
 
     if args.uuid is not None and not re.match( r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', args.uuid, re.I ):
-        print "! Invalid UUID value:", args.uuid, "\n"
+        print("! Invalid UUID value:", args.uuid, "\n")
         quit()
 
     if args.handle is not None:
@@ -72,7 +72,7 @@ def check_args(args):
         try:
             args.handle=int(args.handle, 0)
         except ValueError:
-            print "! Invalid handle:", args.handle, "\n"
+            print("! Invalid handle:", args.handle, "\n")
             quit()
 
     if args.mtu is not None:
@@ -82,7 +82,7 @@ def check_args(args):
             if args.mtu < 23 or args.mtu > 512:
               raise ValueError
         except ValueError:
-            print "! Invalid mtu:", args.mtu, "\n"
+            print("! Invalid mtu:", args.mtu, "\n")
             quit()
 
 def skip_device( args, dev ):
@@ -127,7 +127,7 @@ def main():
             if not d.connectable:
                 warn = yellow("(forcing connection, this could take a while) ")
 
-            print "@ Connecting to %s %s..." % ( bold( d.addr ), warn ),
+            print("@ Connecting to %s %s..." % ( bold( d.addr ), warn )),
             sys.stdout.flush()
 
             try:
@@ -135,21 +135,21 @@ def main():
                 if args.mtu:
                   dev.setMTU(args.mtu)
 
-                print green('connected.')
-                
+                print(green('connected.'))
+
                 if args.uuid or args.handle:
-                    print
+                    print()
                     do_write_ops( dev, args )
-                    print
-                
+                    print()
+
                 if args.enumerate:
-                    print "@ Enumerating all the things ",
+                    print("@ Enumerating all the things "),
                     enumerate_device_properties( dev, args )
 
                 dev.disconnect()
-                print
+                print()
             except Exception as e:
-                print "\n! %s" % red( str(e) ) 
+                print("\n! %s" % red( str(e) ))
                 # just in case
                 try:
                     dev.disconnect()
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     try:
         main()
     except BTLEException as be:
-        print "\nBTLE Exception:\n%s\n" % red( str(be) )
+        print("\nBTLE Exception:\n%s\n" % red( str(be) ))
 
     except KeyboardInterrupt:
-        print "\n@ Quitting."
+        print("\n@ Quitting.")

@@ -51,7 +51,7 @@ class SmarterScanner(Scanner):
         while True:
             if timeout:
                 remain = start + timeout - time.time()
-                if remain <= 0.0: 
+                if remain <= 0.0:
                     break
             else:
                 remain = None
@@ -69,7 +69,7 @@ class SmarterScanner(Scanner):
 
             elif respType == 'scan':
                 # device found
-                addr = self._decode_address(resp) 
+                addr = self._decode_address(resp)
                 dev = self._find_or_create(addr)
 
                 isNewData = dev._update(resp)
@@ -115,9 +115,9 @@ class ScanReceiver(DefaultDelegate):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if not isNewDev:
-            return 
+            return
         elif self.opts.mac is not None and dev.addr != self.opts.mac:
-            return 
+            return
         elif dev.rssi < self.opts.sensitivity:
             return
 
@@ -149,16 +149,15 @@ class ScanReceiver(DefaultDelegate):
         table = SingleTable(tdata, title)
         table.inner_heading_row_border = False
 
-        print table.table + "\n"
+        print(table.table + "\n")
 
 def start_scan(args):
     vendors.load()
     scanner = SmarterScanner(args.mac,args.hci).withDelegate(ScanReceiver(args))
 
     if args.timeout == 0:
-        print "@ Continuous scanning [%d dBm of sensitivity] ...\n" % args.sensitivity
+        print("@ Continuous scanning [%d dBm of sensitivity] ...\n" % args.sensitivity)
     else:
-        print "@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( args.timeout, args.sensitivity )
+        print("@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( args.timeout, args.sensitivity ))
 
     return scanner.scan(args.timeout)
-

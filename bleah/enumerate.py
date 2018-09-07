@@ -59,7 +59,7 @@ def get_svc_desc(s):
     if uuid_name and uuid_name != str(s.uuid):
         svc_line = bold( green( uuid_name ) ) + " ( %s )" % s.uuid
     else:
-        svc_line = bold( str(s.uuid) ) 
+        svc_line = bold( str(s.uuid) )
 
     return svc_line
 
@@ -69,7 +69,7 @@ def get_char_desc(c):
         char_line = '  ' + bold( green( char_name ) ) + " ( %s )" % c.uuid
     else:
         char_line = '  ' + str(c.uuid)
-    
+
     return char_line
 
 # org.bluetooth.characteristic.gap.appearance
@@ -238,13 +238,13 @@ def deserialize_appearance( raw ):
 # org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters
 def deserialize_connection_params( raw ):
     if len(raw) == 8:
-        ( min_con_int, max_con_int, slave_lat, con_tim_mul ) = struct.unpack( 'hhhh', raw ) 
+        ( min_con_int, max_con_int, slave_lat, con_tim_mul ) = struct.unpack( 'hhhh', raw )
         s  = green('Connection Interval') + ": %d -> %d\n" % ( min_con_int, max_con_int )
         s += green('Slave Latency') + ": %d\n" % slave_lat
         s += green('Connection Supervision Timeout Multiplier') + ": %d" % con_tim_mul
     else:
         s = repr(raw)
-    
+
     return s
 
 # org.bluetooth.characteristic.pnp_id
@@ -262,7 +262,7 @@ def deserialize_pnp_id( raw ):
         s  = green('Vendor ID') + ": 0x%04x%s\n" % ( vendor_id, src )
         s += green('Product ID') + ": 0x%04x\n" % prod_id
         s += green('Product Version') + ": 0x%04x\n" % prod_ver
-        
+
     except:
         s = repr(raw)
 
@@ -321,7 +321,7 @@ def deserialize_char( char, props ):
 
 def enumerate_device_properties(dev,args):
     tdata = [
-        [ "Handles", "Service > Characteristics", "Properties", "Data" ] 
+        [ "Handles", "Service > Characteristics", "Properties", "Data" ]
     ]
 
     services = sorted(dev.services, key=lambda s: s.hndStart)
@@ -360,4 +360,4 @@ def enumerate_device_properties(dev,args):
 
         tdata.append([ '', '', '', '' ])
 
-    print "\n\n" + SingleTable(tdata).table
+    print("\n\n" + SingleTable(tdata).table)
