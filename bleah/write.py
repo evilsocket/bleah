@@ -26,7 +26,7 @@ def do_write_ops( dev, args ):
     lookingfor = "uuid(%s)" % (args.uuid)
     if args.handle:
         lookingfor="handle(%d)" % (args.handle)
-    print "@ Searching for characteristic %s ..." % ( bold(lookingfor) ),
+    print("@ Searching for characteristic %s ..." % ( bold(lookingfor) )),
     sys.stdout.flush()
 
     for s in dev.services:
@@ -34,7 +34,7 @@ def do_write_ops( dev, args ):
             break
         elif s.hndStart == s.hndEnd:
             continue
-    
+
         for i, c in enumerate( s.getCharacteristics() ):
             if args.uuid:
                 if str(c.uuid) == args.uuid:
@@ -47,8 +47,8 @@ def do_write_ops( dev, args ):
 
     if char is not None:
         if "WRITE" in char.propertiesToString():
-            print green("found")
-            print "@ Sending %d bytes ..." % len(args.data),
+            print(green("found"))
+            print("@ Sending %d bytes ..." % len(args.data)),
             sys.stdout.flush()
 
             wwrflag=False
@@ -58,12 +58,12 @@ def do_write_ops( dev, args ):
 
             try:
                 char.write( args.data, wwrflag )
-                print green('done')
+                print(green('done'))
             except Exception as e:
-                print red( str(e) )
+                print(red( str(e) ))
 
         else:
-            print red('not writable')
+            print(red('not writable'))
 
     else:
-        print red( bold("NOT FOUND") )
+        print(red( bold("NOT FOUND") ))

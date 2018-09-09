@@ -67,8 +67,6 @@ dX.    9Xb      .dXb    __                         __    dXb.     dXP     .Xb
                               `b  `       '  d'
                                `             '"""
 
-    print bold( blue( banner % VERSION ) )
-    print "                " + blue("Made with ") + red(u"\u2764") + blue(" by Simone 'evilsocket' Margaritelli") 
-    print "\n\n"
-
-
+    print(bold( blue( banner % VERSION ) ))
+    print("                " + blue("Made with ") + red(u"\u2764") + blue(" by Simone 'evilsocket' Margaritelli"))
+    print("\n\n")
