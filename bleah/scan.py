@@ -18,12 +18,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 import time
 import binascii
+import sys
 
 from terminaltables import SingleTable
 from bluepy.btle import BTLEException, Scanner, ScanEntry, DefaultDelegate
 
 import bleah.vendors as vendors
 from bleah.swag import *
+from bleah.enumerate import *
 
 class SmarterScanner(Scanner):
     def __init__(self,mac=None,iface=0):
@@ -87,6 +89,7 @@ class ScanReceiver(DefaultDelegate):
     def __init__(self, opts):
         DefaultDelegate.__init__(self)
         self.opts = opts
+        self.devdata = {}
 
     def _isBitSet( self, byteval, idx ):
         return ((byteval&(1<<idx))!=0);
@@ -111,7 +114,45 @@ class ScanReceiver(DefaultDelegate):
         if self._isBitSet( flags, 4 ):
             bits.append( 'LE + BR/EDR Host Mode' )
 
-        return ', '.join(bits)
+        return bits
+
+    def getDevices(self):
+        """ Returns all found device-addresses
+        """
+
+        return self.devdata.keys()
+
+    def printShortTable(self, addr):
+        """ Print the short overview table for the given device
+
+        @addr: mac addr of the device to print
+        """
+
+        vendor = self.devdata[addr]["vendor"]
+        vlabel = yellow( vendor + ' ' ) if vendor is not None else '?'
+        clabel = green( u'\u2713' ) if self.devdata[addr]["connectable"] else red( u'\u2715' )
+        dlabel = "(no data) " if not self.devdata[addr]["scanData"] else ""
+        title  = " %s (%s dBm) %s" % ( bold(addr), self.devdata[addr]["rssi"], dlabel )
+
+        tdata  = [
+            [ 'Vendor', vlabel ],
+            [ 'Allows Connections', clabel ],
+            [ 'Address Type', self.devdata[addr]["addrType"]]
+        ]
+
+        for desc in self.devdata[addr]["descs"]:
+            tdata.append([ desc, self.devdata[addr][desc] ])
+        if "Short Local Name" in self.devdata[addr].keys():
+            tdata.append([ "Short Local Name", yellow( self.devdata[addr]["Short Local Name"] ) ])
+        if "Complete Local Name" in self.devdata[addr].keys():
+            tdata.append([ "Complete Local Name", yellow( self.devdata[addr]["Complete Local Name"] ) ])
+
+        tdata.append([ 'Flags', ', '.join(self.devdata[addr].get("flags",[])) ])
+
+        table = SingleTable(tdata, title)
+        table.inner_heading_row_border = False
+
+        print(table.table + "\n")
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if not isNewDev:
@@ -121,43 +162,110 @@ class ScanReceiver(DefaultDelegate):
         elif dev.rssi < self.opts.sensitivity:
             return
 
-        vendor = vendors.find(dev.addr)
-        vlabel = yellow( vendor + ' ' ) if vendor is not None else '?'
-        clabel = green( u'\u2713' ) if dev.connectable else red( u'\u2715' )
-        dlabel = "(no data) " if not dev.scanData else ""
-        title  = " %s (%s dBm) %s" % ( bold(dev.addr), dev.rssi, dlabel )
-        tdata  = [
-            [ 'Vendor', vlabel ],
-            [ 'Allows Connections', clabel ],
-            [ 'Address Type', dev.addrType]
-        ]
+        if not dev.addr in self.devdata:
+            self.devdata[dev.addr] = {}
 
+        self.devdata[dev.addr]["vendor"] = vendors.find(dev.addr)
+        self.devdata[dev.addr]["connectable"] = dev.connectable
+        self.devdata[dev.addr]["scanData"] =  dev.scanData
+        self.devdata[dev.addr]["addr"] = dev.addr
+        self.devdata[dev.addr]["rssi"] = dev.rssi
+        self.devdata[dev.addr]["addrType"] = dev.addrType
+
+
+        self.devdata[dev.addr]["descs"] = []
         for ( tag, desc, val ) in dev.getScanData():
             if desc == 'Flags':
-                tdata.append([ 'Flags', self._parseFlags(val) ])
+                self.devdata[dev.addr]["flags"] = self._parseFlags(val)
 
             # short local name or complete local name
             elif tag in [8, 9]:
                 try:
-                    tdata.append([ desc, yellow( val.decode('utf-8') ) ])
-                except UnicodeEncodeError:
-                    tdata.append([ desc, yellow( repr(val) ) ])
+                    self.devdata[dev.addr][desc] = val.decode('utf-8')
+                except UnicodeEncodeError:                    
+                    self.devdata[dev.addr][desc] = repr(val)
             else:
-                tdata.append([ desc, repr(val) ])
+                self.devdata[dev.addr][desc] = repr(val)
+                self.devdata[dev.addr]["descs"].append(desc)
+
+        self.printShortTable(dev.addr)
 
 
-        table = SingleTable(tdata, title)
-        table.inner_heading_row_border = False
 
-        print(table.table + "\n")
 
-def start_scan(args):
-    vendors.load()
-    scanner = SmarterScanner(args.mac,args.hci).withDelegate(ScanReceiver(args))
 
-    if args.timeout == 0:
-        print("@ Continuous scanning [%d dBm of sensitivity] ...\n" % args.sensitivity)
-    else:
-        print("@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( args.timeout, args.sensitivity ))
+class Bleah():
 
-    return scanner.scan(args.timeout)
+    def __init__(self, args):
+        """ Bleah main scanner class
+
+        @args: argparse arguments to configure the scanner
+        """
+
+        self.args = args
+        self.sr = ScanReceiver(self.args)
+        self.start_scan()
+
+        if args.enumerate or args.uuid is not None or args.handle is not None:
+            for d in self.devices:
+                if self.skip_device(d):
+                    continue
+
+                warn = ""
+                if not d.connectable:
+                    warn = yellow("(forcing connection, this could take a while) ")
+
+                print("@ Connecting to %s %s..." % ( bold( d.addr ), warn )),
+                sys.stdout.flush()
+
+                try:
+                    dev = Peripheral(d,d.addrType)
+                    if args.mtu:
+                      dev.setMTU(args.mtu)
+
+                    print(green('connected.'))
+
+                    if args.uuid or args.handle:
+                        print()
+                        do_write_ops( dev, args )
+                        print()
+
+                    if args.enumerate:
+                        print("@ Enumerating all the things "),
+                        enumerate_device_properties( dev, args )
+
+                    dev.disconnect()
+                    print()
+                except Exception as e:
+                    print("\n! %s" % red( str(e) ))
+                    # just in case
+                    try:
+                        dev.disconnect()
+                    except:
+                        pass
+
+
+    def skip_device(self, dev ):
+        """ Checks if a device should be skipped for detailed scanning """
+        
+	if self.args.mac is not None and dev.addr != self.args.mac:
+            return True
+        elif not dev.connectable and self.args.force is False:
+                return True
+        else:
+            return False
+
+
+    def start_scan(self):
+        """ Start the scan for new devices """
+
+        vendors.load()
+
+        scanner = SmarterScanner(self.args.mac,self.args.hci).withDelegate(self.sr)
+
+        if self.args.timeout == 0:
+            print("@ Continuous scanning [%d dBm of sensitivity] ...\n" % self.args.sensitivity)
+        else:
+            print("@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( self.args.timeout, self.args.sensitivity ))
+
+        self.devices = scanner.scan(self.args.timeout)
