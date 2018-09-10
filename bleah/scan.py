@@ -28,9 +28,12 @@ from bleah.swag import *
 from bleah.enumerate import *
 
 class SmarterScanner(Scanner):
-    def __init__(self,mac=None,iface=0):
+    def __init__(self,mac=None,iface=0, args=None):
         Scanner.__init__(self,iface)
         self.mac = mac
+        self.enumerations = {}    # Enumerated device characteristics
+        self.sr = ScanReceiver(args)
+        self.withDelegate(self.sr)
 
     def _find_or_create( self, addr ):
         if addr in self.scanned:
@@ -44,6 +47,17 @@ class SmarterScanner(Scanner):
     def _decode_address( self, resp ):
         addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
         return ':'.join([addr[i:i+2] for i in range(0,12,2)])
+
+    def enumerateDeviceProperties(self, dev, args):
+        """Enumerate the properties of a specific device
+
+        @dev: a connected Peripheral class
+        @args: Command line arguments
+        """
+
+        ens = enumerate_device_properties( dev, args )
+        display_enumerated_device_properties(ens)
+        self.enumerations[dev.addr.lower()] = ens
 
     def process(self, timeout=10.0):
         if self._helper is None:
@@ -182,7 +196,7 @@ class ScanReceiver(DefaultDelegate):
             elif tag in [8, 9]:
                 try:
                     self.devdata[dev.addr][desc] = val.decode('utf-8')
-                except UnicodeEncodeError:                    
+                except UnicodeEncodeError:
                     self.devdata[dev.addr][desc] = repr(val)
             else:
                 self.devdata[dev.addr][desc] = repr(val)
@@ -203,7 +217,8 @@ class Bleah():
         """
 
         self.args = args
-        self.sr = ScanReceiver(self.args)
+        self.scanner = None
+
         self.start_scan()
 
         if args.enumerate or args.uuid is not None or args.handle is not None:
@@ -232,7 +247,7 @@ class Bleah():
 
                     if args.enumerate:
                         print("@ Enumerating all the things "),
-                        enumerate_device_properties( dev, args )
+                        self.scanner.enumerateDeviceProperties(dev, args)
 
                     dev.disconnect()
                     print()
@@ -247,7 +262,7 @@ class Bleah():
 
     def skip_device(self, dev ):
         """ Checks if a device should be skipped for detailed scanning """
-        
+
 	if self.args.mac is not None and dev.addr != self.args.mac:
             return True
         elif not dev.connectable and self.args.force is False:
@@ -261,11 +276,11 @@ class Bleah():
 
         vendors.load()
 
-        scanner = SmarterScanner(self.args.mac,self.args.hci).withDelegate(self.sr)
+        self.scanner = SmarterScanner(self.args.mac,self.args.hci, self.args)
 
         if self.args.timeout == 0:
             print("@ Continuous scanning [%d dBm of sensitivity] ...\n" % self.args.sensitivity)
         else:
             print("@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( self.args.timeout, self.args.sensitivity ))
 
-        self.devices = scanner.scan(self.args.timeout)
+        self.devices = self.scanner.scan(self.args.timeout)

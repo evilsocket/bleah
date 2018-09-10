@@ -318,28 +318,26 @@ def deserialize_char( char, props ):
 
     return string
 
+def display_enumerated_device_properties(dprops):
+    """ Create a table displaying the device properties
 
-def enumerate_device_properties(dev,args):
+    @dprops: the device properties
+    """
     tdata = [
         [ "Handles", "Service > Characteristics", "Properties", "Data" ]
     ]
 
-    services = sorted(dev.services, key=lambda s: s.hndStart)
-    for s in services:
+    for s in dprops:
         sys.stdout.write('.')
         sys.stdout.flush()
 
-        if s.hndStart == s.hndEnd:
-            continue
+        tdata.append([ "%04x -> %04x" % ( s["hndStart"], s["hndEnd"] ), s["desc"], "", "" ])
 
-        tdata.append([ "%04x -> %04x" % ( s.hndStart, s.hndEnd ), get_svc_desc(s), "", "" ])
-
-        chars = s.getCharacteristics()
-        for i, char in enumerate(chars):
-            desc  = get_char_desc(char)
-            props = char.propertiesToString().replace( 'WRITE', bold('WRITE') )
-            hnd   = char.getHandle()
-            value = deserialize_char( char, props )
+        for i, char in enumerate(s["characteristics"]):
+            desc = char["desc"]
+            props = char["props"].replace( 'WRITE', bold('WRITE') )
+            hnd = char["hnd"]
+            value = char["value"]
 
             tdata.append([ "%04x" % hnd, desc, props, value ])
 
@@ -361,3 +359,30 @@ def enumerate_device_properties(dev,args):
         tdata.append([ '', '', '', '' ])
 
     print("\n\n" + SingleTable(tdata).table)
+
+def enumerate_device_properties(dev,args):
+    sres = []  # list of services
+
+    services = sorted(dev.services, key=lambda s: s.hndStart)
+
+    # Collect
+    for s in services:
+        if s.hndStart == s.hndEnd:
+            continue
+
+        sblock = {"hndStart": s.hndStart,
+                  "hndEnd": s.hndEnd,
+                  "desc": get_svc_desc(s),
+                  "characteristics": []
+                  }
+
+        chars = s.getCharacteristics()
+        for char in chars:
+            achar = {"desc": get_char_desc(char),
+                     "props": char.propertiesToString(),
+                     "hnd": char.getHandle(),
+                     "value": deserialize_char( char, char.propertiesToString() )}
+            sblock["characteristics"].append(achar)
+        sres.append(sblock)
+
+    return sres
