@@ -102,6 +102,7 @@ def main():
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
     parser.add_argument('-m', '--mtu', action='store', type=int, default=None, help='Set MTU.' )
+    parser.add_argument('-j', '--json_log', action='store', type=str, default=None, help='Name of a json logfile' )
 
     args = parser.parse_args(sys.argv[1:])
 

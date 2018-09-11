@@ -19,6 +19,7 @@
 import time
 import binascii
 import sys
+import json
 
 from terminaltables import SingleTable
 from bluepy.btle import BTLEException, Scanner, ScanEntry, DefaultDelegate
@@ -58,6 +59,27 @@ class SmarterScanner(Scanner):
         ens = enumerate_device_properties( dev, args )
         display_enumerated_device_properties(ens)
         self.enumerations[dev.addr.lower()] = ens
+
+    def storeJson(self, filename):
+        """ store scan results as json file
+
+        @filename: name of the json file to write
+        """
+
+        def deflt(foo):
+            print("Broken string " + str(foo))
+            return "???"
+
+
+        data = self.sr.devdata.copy()
+
+        for akey in data.keys():
+            if akey in self.enumerations:
+                data[akey]["enumerations"] = self.enumerations[akey]
+
+        with open(filename, "wt") as fh:
+            json.dump(data, fh, default = deflt, indent=4)
+
 
     def process(self, timeout=10.0):
         if self._helper is None:
@@ -181,7 +203,7 @@ class ScanReceiver(DefaultDelegate):
 
         self.devdata[dev.addr]["vendor"] = vendors.find(dev.addr)
         self.devdata[dev.addr]["connectable"] = dev.connectable
-        self.devdata[dev.addr]["scanData"] =  dev.scanData
+        self.devdata[dev.addr]["scanData"] =  dev.getScanData()
         self.devdata[dev.addr]["addr"] = dev.addr
         self.devdata[dev.addr]["rssi"] = dev.rssi
         self.devdata[dev.addr]["addrType"] = dev.addrType
@@ -258,7 +280,8 @@ class Bleah():
                         dev.disconnect()
                     except:
                         pass
-
+            if args.json_log:
+                self.scanner.storeJson(args.json_log)
 
     def skip_device(self, dev ):
         """ Checks if a device should be skipped for detailed scanning """
