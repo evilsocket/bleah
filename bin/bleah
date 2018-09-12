@@ -29,8 +29,6 @@ from bluepy.btle import BTLEException
 
 from bleah.swag import *
 from bleah.scan import *
-from bleah.enumerate import *
-from bleah.write import *
 
 def check_args(args):
     if args.datafile is not None:
@@ -85,13 +83,6 @@ def check_args(args):
             print("! Invalid mtu:", args.mtu, "\n")
             quit()
 
-def skip_device( args, dev ):
-    if args.mac is not None and dev.addr != args.mac:
-        return True
-    elif not dev.connectable and args.force is False:
-        return True
-    else:
-        return False
 
 def main():
     print_sexy_banner()
@@ -111,50 +102,15 @@ def main():
     parser.add_argument('-d', '--data', action='store', type=str, default=None, help='Data to be written as a quoted string or as hex ( 0xdeadbeef... ).' )
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
     parser.add_argument('-m', '--mtu', action='store', type=int, default=None, help='Set MTU.' )
+    parser.add_argument('-j', '--json_log', action='store', type=str, default=None, help='Name of a json logfile' )
 
     args = parser.parse_args(sys.argv[1:])
 
     check_args(args)
 
-    devices = start_scan(args)
+    bleah = Bleah(args)
 
-    if args.enumerate or args.uuid is not None or args.handle is not None:
-        for d in devices:
-            if skip_device( args, d ):
-                continue
 
-            warn = ""
-            if not d.connectable:
-                warn = yellow("(forcing connection, this could take a while) ")
-
-            print("@ Connecting to %s %s..." % ( bold( d.addr ), warn )),
-            sys.stdout.flush()
-
-            try:
-                dev = Peripheral(d,d.addrType)
-                if args.mtu:
-                  dev.setMTU(args.mtu)
-
-                print(green('connected.'))
-
-                if args.uuid or args.handle:
-                    print()
-                    do_write_ops( dev, args )
-                    print()
-
-                if args.enumerate:
-                    print("@ Enumerating all the things "),
-                    enumerate_device_properties( dev, args )
-
-                dev.disconnect()
-                print()
-            except Exception as e:
-                print("\n! %s" % red( str(e) ))
-                # just in case
-                try:
-                    dev.disconnect()
-                except:
-                    pass
 
 if __name__ == "__main__":
     try:

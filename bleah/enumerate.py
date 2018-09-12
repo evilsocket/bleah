@@ -54,26 +54,49 @@ def is_mostly_printable(s):
 
     return ( pr / float(tot) ) >= 0.75
 
-def get_svc_desc(s):
+def get_svc_desc(s, plain=False):
+    """
+
+    @plain: Fo not use fancy font
+    """
     uuid_name = s.uuid.getCommonName()
     if uuid_name and uuid_name != str(s.uuid):
-        svc_line = bold( green( uuid_name ) ) + " ( %s )" % s.uuid
+        if plain:
+            svc_line = uuid_name + " ( %s )" % s.uuid
+        else:
+            svc_line = bold( green( uuid_name ) ) + " ( %s )" % s.uuid
     else:
-        svc_line = bold( str(s.uuid) )
+        if plain:
+            svc_line = str(s.uuid)
+        else:
+            svc_line = bold( str(s.uuid) )
 
     return svc_line
 
-def get_char_desc(c):
+def get_char_desc(c, plain=False):
+    """
+    @plain: Do not add fancy colors and font effects
+    """
     char_name = c.uuid.getCommonName()
     if char_name and char_name != str(c.uuid):
-        char_line = '  ' + bold( green( char_name ) ) + " ( %s )" % c.uuid
+        if plain:
+            char_line = char_name + " ( %s )" % c.uuid
+        else:
+            char_line = '  ' + bold( green( char_name ) ) + " ( %s )" % c.uuid
     else:
-        char_line = '  ' + str(c.uuid)
+        if plain:
+            char_line = str(c.uuid)
+        else:
+            char_line = '  ' + str(c.uuid)
 
     return char_line
 
 # org.bluetooth.characteristic.gap.appearance
-def deserialize_appearance( raw ):
+def deserialize_appearance( raw, plain=False ):
+    """
+
+    @plain: no fancy font effects
+    """
     apps = {
         0: "Unknown",
         64: "Generic Phone",
@@ -229,26 +252,41 @@ def deserialize_appearance( raw ):
 
     try:
         app = struct.unpack( 'h', raw )[0]
-        s = green( apps[app] )
+        if plain:
+            s = apps[app]
+        else:
+            s = green( apps[app] )
     except:
         s = repr(raw)
 
     return s
 
 # org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters
-def deserialize_connection_params( raw ):
+def deserialize_connection_params( raw, plain ):
+    """
+    @plain: No fancy font effects
+    """
     if len(raw) == 8:
         ( min_con_int, max_con_int, slave_lat, con_tim_mul ) = struct.unpack( 'hhhh', raw )
-        s  = green('Connection Interval') + ": %d -> %d\n" % ( min_con_int, max_con_int )
-        s += green('Slave Latency') + ": %d\n" % slave_lat
-        s += green('Connection Supervision Timeout Multiplier') + ": %d" % con_tim_mul
+        if plain:
+            s  = 'Connection Interval' + ": %d -> %d\n" % ( min_con_int, max_con_int )
+            s += 'Slave Latency' + ": %d\n" % slave_lat
+            s += 'Connection Supervision Timeout Multiplier' + ": %d" % con_tim_mul
+        else:
+            s  = green('Connection Interval') + ": %d -> %d\n" % ( min_con_int, max_con_int )
+            s += green('Slave Latency') + ": %d\n" % slave_lat
+            s += green('Connection Supervision Timeout Multiplier') + ": %d" % con_tim_mul
     else:
         s = repr(raw)
 
     return s
 
 # org.bluetooth.characteristic.pnp_id
-def deserialize_pnp_id( raw ):
+def deserialize_pnp_id( raw, plain=False ):
+    """
+
+    @plain: No fancy font effects
+    """
     try:
         ( vendor_id_src, vendor_id, prod_id, prod_ver ) = struct.unpack( '<Bhhh', raw )
 
@@ -259,9 +297,14 @@ def deserialize_pnp_id( raw ):
         else:
             src = ''
 
-        s  = green('Vendor ID') + ": 0x%04x%s\n" % ( vendor_id, src )
-        s += green('Product ID') + ": 0x%04x\n" % prod_id
-        s += green('Product Version') + ": 0x%04x\n" % prod_ver
+        if plain:
+            s  = 'Vendor ID' + ": 0x%04x%s\n" % ( vendor_id, src )
+            s += 'Product ID' + ": 0x%04x\n" % prod_id
+            s += 'Product Version' + ": 0x%04x\n" % prod_ver
+        else:
+            s  = green('Vendor ID') + ": 0x%04x%s\n" % ( vendor_id, src )
+            s += green('Product ID') + ": 0x%04x\n" % prod_id
+            s += green('Product Version') + ": 0x%04x\n" % prod_ver
 
     except:
         s = repr(raw)
@@ -269,13 +312,23 @@ def deserialize_pnp_id( raw ):
     return s
 
 # org.bluetooth.characteristic.gap.peripheral_privacy_flag
-def deserialize_peripheral_privacy_flag( raw ):
+def deserialize_peripheral_privacy_flag( raw, plain=False ):
+    """
+    @plain: No fancy font effects
+    """
+
     try:
         b = ord(raw[0])
-        if b == 0x00:
-            s = green('Privacy Disabled')
+        if plain:
+            if b == 0x00:
+                s = 'Privacy Disabled'
+            else:
+                s = 'Privacy Enabled'
         else:
-            s = red('Privacy Enabled')
+            if b == 0x00:
+                s = green('Privacy Disabled')
+            else:
+                s = red('Privacy Enabled')
 
     except:
         s = repr(raw)
@@ -284,62 +337,74 @@ def deserialize_peripheral_privacy_flag( raw ):
 
 
 
-def deserialize_char( char, props ):
+def deserialize_char( char, props, raw=None, plain=False ):
+    """
+    @raw: The raw data. Needs to be read externally to have consistent data (plain and fancy)
+    @plain: Do not add fancy font effects
+    """
+
     # INDICATE makes the read operation hang
     if 'READ' in props and 'INDICATE' not in props:
         try:
-            raw = char.read()
-
+            if raw is None:
+                raw = char.read()
             if char.uuid == AssignedNumbers.peripheral_preferred_connection_parameters:
-                string = deserialize_connection_params(raw)
+                string = deserialize_connection_params(raw, plain)
 
             elif char.uuid == AssignedNumbers.appearance:
-                string = deserialize_appearance(raw)
+                string = deserialize_appearance(raw, plain)
 
             elif char.uuid == AssignedNumbers.pnp_id:
-                string = deserialize_pnp_id(raw)
+                string = deserialize_pnp_id(raw, plain)
 
             elif char.uuid == AssignedNumbers.peripheral_privacy_flag:
-                string = deserialize_peripheral_privacy_flag(raw)
+                string = deserialize_peripheral_privacy_flag(raw, plain)
 
             elif is_mostly_printable(raw):
-                try:
-                    string = yellow( repr( raw.decode('utf-8') ) )
-                except:
-                    string = yellow( repr( raw ) )
+                if plain:
+                    try:
+                        string = repr( raw.decode('utf-8') )
+                    except:
+                        string = repr( raw )
+                else:
+                    try:
+                        string = yellow( repr( raw.decode('utf-8') ) )
+                    except:
+                        string = yellow( repr( raw ) )
 
             else:
                 string = repr(raw)
 
         except Exception as e:
-            string = red( str(e) )
+            if plain:
+                string = str(e)
+            else:
+                string = red( str(e) )
     else:
         string = ''
 
     return string
 
+def display_enumerated_device_properties(dprops):
+    """ Create a table displaying the device properties
 
-def enumerate_device_properties(dev,args):
+    @dprops: the device properties
+    """
     tdata = [
         [ "Handles", "Service > Characteristics", "Properties", "Data" ]
     ]
 
-    services = sorted(dev.services, key=lambda s: s.hndStart)
-    for s in services:
+    for s in dprops:
         sys.stdout.write('.')
         sys.stdout.flush()
 
-        if s.hndStart == s.hndEnd:
-            continue
+        tdata.append([ "%04x -> %04x" % ( s["hndStart"], s["hndEnd"] ), s["desc"], "", "" ])
 
-        tdata.append([ "%04x -> %04x" % ( s.hndStart, s.hndEnd ), get_svc_desc(s), "", "" ])
-
-        chars = s.getCharacteristics()
-        for i, char in enumerate(chars):
-            desc  = get_char_desc(char)
-            props = char.propertiesToString().replace( 'WRITE', bold('WRITE') )
-            hnd   = char.getHandle()
-            value = deserialize_char( char, props )
+        for i, char in enumerate(s["characteristics"]):
+            desc = char["desc"]
+            props = char["props"].replace( 'WRITE', bold('WRITE') )
+            hnd = char["hnd"]
+            value = char["value"]
 
             tdata.append([ "%04x" % hnd, desc, props, value ])
 
@@ -361,3 +426,40 @@ def enumerate_device_properties(dev,args):
         tdata.append([ '', '', '', '' ])
 
     print("\n\n" + SingleTable(tdata).table)
+
+def enumerate_device_properties(dev,args):
+    sres = []  # list of services
+
+    services = sorted(dev.services, key=lambda s: s.hndStart)
+
+    # Collect
+    for s in services:
+        if s.hndStart == s.hndEnd:
+            continue
+
+        sblock = {"hndStart": s.hndStart,
+                  "hndEnd": s.hndEnd,
+                  "desc": get_svc_desc(s),
+                  "desc_plain": get_svc_desc(s, True),
+                  "characteristics": []
+                  }
+
+        chars = s.getCharacteristics()
+        for char in chars:
+            props = char.propertiesToString()
+            if 'READ' in props and 'INDICATE' not in props:
+                try:
+                    raw = char.read()
+                except:
+                    raw = None
+            achar = {"desc": get_char_desc(char),
+                     "desc_plain": get_char_desc(char, True),
+                     "props": char.propertiesToString(),
+                     "hnd": char.getHandle(),
+                     "value": deserialize_char( char, char.propertiesToString(), raw ),
+                     "value_plain": deserialize_char( char, char.propertiesToString(), raw, True )
+                     }
+            sblock["characteristics"].append(achar)
+        sres.append(sblock)
+
+    return sres
