@@ -286,10 +286,10 @@ class Bleah():
     def skip_device(self, dev ):
         """ Checks if a device should be skipped for detailed scanning """
 
-	if self.args.mac is not None and dev.addr != self.args.mac:
+    	if self.args.mac is not None and dev.addr != self.args.mac:
             return True
         elif not dev.connectable and self.args.force is False:
-                return True
+            return True
         else:
             return False
 
