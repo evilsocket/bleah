@@ -92,7 +92,7 @@ def main():
     parser.add_argument('-t', '--timeout', action='store', type=int, default=5, help='Scan delay, 0 for continuous scanning.')
     parser.add_argument('-s', '--sensitivity', action='store', type=int, default=-128, help='dBm threshold.')
 
-    parser.add_argument('-b', '--mac', action='store', type=str, default=None, help='Filter by device address.' )
+    parser.add_argument('-b', '--mac', action='store', type=str, default=None, help='Filter by device address. Does not have the full mac. Also: separate several addresses by ","' )
     parser.add_argument('-f', '--force', action='store_true', help='Try to connect even if the device doesn\'t allow to.')
 
     parser.add_argument('-e', '--enumerate', action='store_true', help='Connect to available devices and perform services enumeration.')
@@ -103,6 +103,7 @@ def main():
     parser.add_argument('-r', '--datafile', action='store', type=str, default=None, help='Read data to be written from this file.' )
     parser.add_argument('-m', '--mtu', action='store', type=int, default=None, help='Set MTU.' )
     parser.add_argument('-j', '--json_log', action='store', type=str, default=None, help='Name of a json logfile' )
+    parser.add_argument('-R', '--rescans', action='store', type=int, default=1, help='Number of rescans' )
 
     args = parser.parse_args(sys.argv[1:])
 
