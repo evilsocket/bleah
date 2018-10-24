@@ -28,6 +28,21 @@ import bleah.vendors as vendors
 from bleah.swag import *
 from bleah.enumerate import *
 
+def macMatchesArgPattern(argpattern, mac):
+    """
+
+    @argpattern: None or a list of one or more macs, separated by ','. macs can be partial
+    """
+
+    if argpattern is None:
+        return True
+
+    for amac in argpattern.split(","):
+        if mac.startswith(amac):
+            return True
+
+    return False
+
 class SmarterScanner(Scanner):
     def __init__(self,mac=None,iface=0, args=None):
         Scanner.__init__(self,iface)
@@ -115,8 +130,6 @@ class SmarterScanner(Scanner):
                 if self.delegate is not None:
                     self.delegate.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
 
-                if self.mac is not None and dev.addr == self.mac:
-                    break
 
             else:
                 raise BTLEException(BTLEException.INTERNAL_ERROR, "Unexpected response: " + respType)
@@ -185,6 +198,10 @@ class ScanReceiver(DefaultDelegate):
 
         tdata.append([ 'Flags', ', '.join(self.devdata[addr].get("flags",[])) ])
 
+        if self.opts.rescans > 1:
+            rssis = [b for a,b in self.devdata[addr]["rssi_log"]]
+            tdata.append([ 'RSSI min/max', '{}/{}'.format(min(rssis), max(rssis))])
+
         table = SingleTable(tdata, title)
         table.inner_heading_row_border = False
 
@@ -193,13 +210,15 @@ class ScanReceiver(DefaultDelegate):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if not isNewDev:
             return
-        elif self.opts.mac is not None and dev.addr != self.opts.mac:
+
+        if not macMatchesArgPattern(self.opts.mac, dev.addr):
             return
-        elif dev.rssi < self.opts.sensitivity:
+
+        if dev.rssi < self.opts.sensitivity:
             return
 
         if not dev.addr in self.devdata:
-            self.devdata[dev.addr] = {}
+            self.devdata[dev.addr] = {"rssi_log":[]}
 
         self.devdata[dev.addr]["vendor"] = vendors.find(dev.addr)
         self.devdata[dev.addr]["connectable"] = dev.connectable
@@ -207,6 +226,7 @@ class ScanReceiver(DefaultDelegate):
         self.devdata[dev.addr]["addr"] = dev.addr
         self.devdata[dev.addr]["rssi"] = dev.rssi
         self.devdata[dev.addr]["addrType"] = dev.addrType
+        self.devdata[dev.addr]["rssi_log"].append((time.time(),dev.rssi))
 
 
         self.devdata[dev.addr]["descs"] = []
@@ -240,6 +260,7 @@ class Bleah():
 
         self.args = args
         self.scanner = None
+        self.devices = []
 
         self.start_scan()
 
@@ -280,15 +301,16 @@ class Bleah():
                         dev.disconnect()
                     except:
                         pass
-            if args.json_log:
-                self.scanner.storeJson(args.json_log)
+        if args.json_log:
+            self.scanner.storeJson(args.json_log)
 
     def skip_device(self, dev ):
         """ Checks if a device should be skipped for detailed scanning """
 
-    	if self.args.mac is not None and dev.addr != self.args.mac:
+        if not macMatchesArgPattern(self.args.mac, dev.addr):
             return True
-        elif not dev.connectable and self.args.force is False:
+
+        if not dev.connectable and self.args.force is False:
             return True
         else:
             return False
@@ -306,4 +328,5 @@ class Bleah():
         else:
             print("@ Scanning for %ds [%d dBm of sensitivity] ...\n" % ( self.args.timeout, self.args.sensitivity ))
 
-        self.devices = self.scanner.scan(self.args.timeout)
+        for i in range(0, self.args.rescans):
+            self.devices += self.scanner.scan(self.args.timeout)
