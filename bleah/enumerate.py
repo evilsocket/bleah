@@ -447,6 +447,7 @@ def enumerate_device_properties(dev,args):
         chars = s.getCharacteristics()
         for char in chars:
             props = char.propertiesToString()
+            raw = None
             if 'READ' in props and 'INDICATE' not in props:
                 try:
                     raw = char.read()

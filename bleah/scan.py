@@ -27,6 +27,7 @@ from bluepy.btle import BTLEException, Scanner, ScanEntry, DefaultDelegate
 import bleah.vendors as vendors
 from bleah.swag import *
 from bleah.enumerate import *
+from bleah.write import *
 
 def macMatchesArgPattern(argpattern, mac):
     """
