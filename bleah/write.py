@@ -51,10 +51,9 @@ def do_write_ops( dev, args ):
             print("@ Sending %d bytes ..." % len(args.data)),
             sys.stdout.flush()
 
-            wwrflag=False
-
+            wwrflag=True
             if "NO RESPONSE" in char.propertiesToString():
-                wwrflag=True
+                wwrflag=False
 
             try:
                 char.write( args.data, wwrflag )
