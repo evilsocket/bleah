@@ -139,6 +139,10 @@ class ScanReceiver(DefaultDelegate):
     def __init__(self, opts):
         DefaultDelegate.__init__(self)
         self.opts = opts
+        self.nickdata = None
+        if self.opts.nicknames:
+            with open(self.opts.nicknames) as fh:
+                self.nickdata = json.load(fh)
         self.devdata = {}
 
     def _isBitSet( self, byteval, idx ):
@@ -182,7 +186,10 @@ class ScanReceiver(DefaultDelegate):
         vlabel = yellow( vendor + ' ' ) if vendor is not None else '?'
         clabel = green( u'\u2713' ) if self.devdata[addr]["connectable"] else red( u'\u2715' )
         dlabel = "(no data) " if not self.devdata[addr]["scanData"] else ""
-        title  = " %s (%s dBm) %s" % ( bold(addr), self.devdata[addr]["rssi"], dlabel )
+        if "nick" in self.devdata[addr] and self.devdata[addr]["nick"]:
+            title  = " %s: %s (%s dBm) %s" % ( blue(self.devdata[addr]["nick"]), bold(addr), self.devdata[addr]["rssi"], dlabel )
+        else:
+            title  = " %s (%s dBm) %s" % ( bold(addr), self.devdata[addr]["rssi"], dlabel )
 
         tdata  = [
             [ 'Vendor', vlabel ],
@@ -226,6 +233,10 @@ class ScanReceiver(DefaultDelegate):
         self.devdata[dev.addr]["scanData"] =  dev.getScanData()
         self.devdata[dev.addr]["addr"] = dev.addr
         self.devdata[dev.addr]["rssi"] = dev.rssi
+        if self.nickdata and dev.addr.lower() in self.nickdata["addr"]:
+            self.devdata[dev.addr]["nick"] = self.nickdata["addr"][dev.addr.lower()]
+        else:
+            self.devdata[dev.addr]["nick"] = None
         self.devdata[dev.addr]["addrType"] = dev.addrType
         self.devdata[dev.addr]["rssi_log"].append((time.time(),dev.rssi))
 

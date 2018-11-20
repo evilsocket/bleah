@@ -104,6 +104,7 @@ def main():
     parser.add_argument('-m', '--mtu', action='store', type=int, default=None, help='Set MTU.' )
     parser.add_argument('-j', '--json_log', action='store', type=str, default=None, help='Name of a json logfile' )
     parser.add_argument('-R', '--rescans', action='store', type=int, default=1, help='Number of rescans' )
+    parser.add_argument('-N', '--nicknames', action='store', type=str, default=None, help='Json file containing nicknames for devices and services' )
 
     args = parser.parse_args(sys.argv[1:])
 
