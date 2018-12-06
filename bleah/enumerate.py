@@ -397,11 +397,11 @@ def display_enumerated_device_properties(dprops):
     for s in dprops:
         sys.stdout.write('.')
         sys.stdout.flush()
+        tdata.append([ "%04x -> %04x" % ( s["hndStart"], s["hndEnd"] ), s["desc"] + " " + blue(s["nick"] or ""), "", "" ])
 
-        tdata.append([ "%04x -> %04x" % ( s["hndStart"], s["hndEnd"] ), s["desc"], "", "" ])
 
         for i, char in enumerate(s["characteristics"]):
-            desc = char["desc"]
+            desc = char["desc"] + " " + blue(char["nick"] or "")
             props = char["props"].replace( 'WRITE', bold('WRITE') )
             hnd = char["hnd"]
             value = char["value"]
@@ -441,8 +441,15 @@ def enumerate_device_properties(dev,args):
                   "hndEnd": s.hndEnd,
                   "desc": get_svc_desc(s),
                   "desc_plain": get_svc_desc(s, True),
-                  "characteristics": []
+                  "characteristics": [],
+                  "nick": None
                   }
+
+        if args.nicknames:
+            with open(args.nicknames) as fh:
+                data = json.load(fh)
+                if "services" in data and str(s.uuid).lower() in data["services"]:
+                    sblock["nick"] = data["services"][str(s.uuid).lower()]
 
         chars = s.getCharacteristics()
         for char in chars:
@@ -458,8 +465,16 @@ def enumerate_device_properties(dev,args):
                      "props": char.propertiesToString(),
                      "hnd": char.getHandle(),
                      "value": deserialize_char( char, char.propertiesToString(), raw ),
-                     "value_plain": deserialize_char( char, char.propertiesToString(), raw, True )
+                     "value_plain": deserialize_char( char, char.propertiesToString(), raw, True ),
+                     "nick": None
                      }
+
+            if args.nicknames:
+                with open(args.nicknames) as fh:
+                    data = json.load(fh)
+                    if "characteristics" in data and str(char.uuid).lower() in data["characteristics"]:
+                        achar["nick"] = data["characteristics"][str(char.uuid).lower()]
+
             sblock["characteristics"].append(achar)
         sres.append(sblock)
 
