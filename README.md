@@ -6,7 +6,7 @@ A BLE scanner for "smart" devices hacking based on the `bluepy` library, dead ea
 
 Install building prerequisites:
 
-    sudo apt-get install git build-essential libglib2.0-dev
+    sudo apt-get install git build-essential libglib2.0-dev python-setuptools
 
 Install [bluepy](https://github.com/IanHarvey/bluepy) from source:
 
