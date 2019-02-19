@@ -1,6 +1,0 @@
-{
-"addr":{"de:ad:be:ef:0f:ed": "S23",
-        "0f:ed:de:ad:be:ef": "S42"},
-"services":{"11111111-0000-1111-8888-123456789123": "example service"},
-"characteristics":{"11111110-0000-1111-8888-123456789123": "example characteristics"}
-}
